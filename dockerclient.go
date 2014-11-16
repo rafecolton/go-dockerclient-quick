@@ -84,7 +84,7 @@ func getEndpoint() (*url.URL, error) {
 }
 
 // LatestImageIDByName uses the provided docker client to get the id
-// most-recently-created image with a name matching `name`
+// of the most-recently-created image with a name matching `name`
 func (client *DockerClient) LatestImageIDByName(name string) (string, error) {
 	images, err := (*docker.Client)(client).ListImages(false)
 	if err != nil {
