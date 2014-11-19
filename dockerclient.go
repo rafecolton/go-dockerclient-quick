@@ -89,6 +89,8 @@ func (client *DockerClient) LatestImageIDByName(name string) (string, error) {
 	return client.latestImageByRegex("^" + name + "$")
 }
 
+// LatestImageIDByTag uses the provided docker client to get the id
+// of the most-recently-created image with a name matching `:<tag>$`
 func (client *DockerClient) LatestImageIDByTag(tag string) (string, error) {
 	return client.latestImageByRegex(":" + tag + "$")
 }
