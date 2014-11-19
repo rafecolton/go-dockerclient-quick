@@ -13,13 +13,20 @@ import (
 	"github.com/rafecolton/go-dockerclient-sort"
 )
 
-var client *DockerClient
+var client *dockerClient
+
+type dockerClient docker.Client
 
 // DockerClient wraps docker.Client, adding a few handy functions
-type DockerClient docker.Client
+type DockerClient interface {
+	// Client returns the underlying *docker.Client
+	Client() *docker.Client
+	LatestImageIDByName(name string) (string, error)
+	LatestImageIDByTag(tag string) (string, error)
+}
 
 // NewDockerClient returns the dockerclient used by the artifactory package
-func NewDockerClient() (*DockerClient, error) {
+func NewDockerClient() (DockerClient, error) {
 	if client != nil {
 		return client, nil
 	}
@@ -50,8 +57,7 @@ func NewDockerClient() (*DockerClient, error) {
 			return nil, err
 		}
 	}
-	client = (*DockerClient)(dclient)
-
+	client = (*dockerClient)(dclient)
 	return client, nil
 }
 
@@ -85,17 +91,17 @@ func getEndpoint() (*url.URL, error) {
 
 // LatestImageIDByName uses the provided docker client to get the id
 // of the most-recently-created image with a name matching `name`
-func (client *DockerClient) LatestImageIDByName(name string) (string, error) {
+func (client *dockerClient) LatestImageIDByName(name string) (string, error) {
 	return client.latestImageByRegex("^" + name + "$")
 }
 
 // LatestImageIDByTag uses the provided docker client to get the id
 // of the most-recently-created image with a name matching `:<tag>$`
-func (client *DockerClient) LatestImageIDByTag(tag string) (string, error) {
+func (client *dockerClient) LatestImageIDByTag(tag string) (string, error) {
 	return client.latestImageByRegex(":" + tag + "$")
 }
 
-func (client *DockerClient) latestImageByRegex(regex string) (string, error) {
+func (client *dockerClient) latestImageByRegex(regex string) (string, error) {
 	images, err := (*docker.Client)(client).ListImages(false)
 	if err != nil {
 		return "", err
@@ -116,6 +122,6 @@ func (client *DockerClient) latestImageByRegex(regex string) (string, error) {
 }
 
 // Client returns the underlying *docker.Client for calling all of its functions
-func (client *DockerClient) Client() *docker.Client {
+func (client *dockerClient) Client() *docker.Client {
 	return (*docker.Client)(client)
 }
