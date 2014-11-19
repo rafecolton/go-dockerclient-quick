@@ -21,7 +21,13 @@ type dockerClient docker.Client
 type DockerClient interface {
 	// Client returns the underlying *docker.Client
 	Client() *docker.Client
+
+	// LatestImageIDByName uses the provided docker client to get the id
+	// of the most-recently-created image with a name matching `name`
 	LatestImageIDByName(name string) (string, error)
+
+	// LatestImageIDByTag uses the provided docker client to get the id
+	// of the most-recently-created image with a name matching `:<tag>$`
 	LatestImageIDByTag(tag string) (string, error)
 }
 
@@ -89,14 +95,10 @@ func getEndpoint() (*url.URL, error) {
 	return u, nil
 }
 
-// LatestImageIDByName uses the provided docker client to get the id
-// of the most-recently-created image with a name matching `name`
 func (client *dockerClient) LatestImageIDByName(name string) (string, error) {
 	return client.latestImageByRegex("^" + name + "$")
 }
 
-// LatestImageIDByTag uses the provided docker client to get the id
-// of the most-recently-created image with a name matching `:<tag>$`
 func (client *dockerClient) LatestImageIDByTag(tag string) (string, error) {
 	return client.latestImageByRegex(":" + tag + "$")
 }
