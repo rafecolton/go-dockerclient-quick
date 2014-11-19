@@ -86,6 +86,14 @@ func getEndpoint() (*url.URL, error) {
 // LatestImageIDByName uses the provided docker client to get the id
 // of the most-recently-created image with a name matching `name`
 func (client *DockerClient) LatestImageIDByName(name string) (string, error) {
+	return client.latestImageByRegex("^" + name + "$")
+}
+
+func (client *DockerClient) LatestImageIDByTag(tag string) (string, error) {
+	return client.latestImageByRegex(":" + tag + "$")
+}
+
+func (client *DockerClient) latestImageByRegex(regex string) (string, error) {
 	images, err := (*docker.Client)(client).ListImages(false)
 	if err != nil {
 		return "", err
@@ -93,7 +101,7 @@ func (client *DockerClient) LatestImageIDByName(name string) (string, error) {
 	sort.Sort(dockersort.ByCreatedDescending(images))
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
-			matched, err := regexp.MatchString("^"+name+"$", tag)
+			matched, err := regexp.MatchString(regex, tag)
 			if err != nil {
 				return "", nil
 			}
@@ -102,8 +110,7 @@ func (client *DockerClient) LatestImageIDByName(name string) (string, error) {
 			}
 		}
 	}
-
-	return "", fmt.Errorf("unable to find image named %s", name)
+	return "", fmt.Errorf("unable to find image matching %q", regex)
 }
 
 // Client returns the underlying *docker.Client for calling all of its functions
