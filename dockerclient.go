@@ -29,6 +29,10 @@ type DockerClient interface {
 	// LatestImageIDByTag uses the provided docker client to get the id
 	// of the most-recently-created image with a name matching `:<tag>$`
 	LatestImageIDByTag(tag string) (string, error)
+
+	// LatestImageByRegex returns the docker api image object if that object is
+	// tagged with at least one tag that matches "regex"
+	LatestImageByRegex(regex string) (*docker.APIImages, error)
 }
 
 // NewDockerClient returns the dockerclient used by the artifactory package
@@ -96,31 +100,39 @@ func getEndpoint() (*url.URL, error) {
 }
 
 func (client *dockerClient) LatestImageIDByName(name string) (string, error) {
-	return client.latestImageByRegex("^" + name + "$")
+	image, err := client.LatestImageByRegex("^" + name + "$")
+	if err != nil {
+		return "", err
+	}
+	return image.ID, nil
 }
 
 func (client *dockerClient) LatestImageIDByTag(tag string) (string, error) {
-	return client.latestImageByRegex(":" + tag + "$")
-}
-
-func (client *dockerClient) latestImageByRegex(regex string) (string, error) {
-	images, err := (*docker.Client)(client).ListImages(false)
+	image, err := client.LatestImageByRegex(":" + tag + "$")
 	if err != nil {
 		return "", err
+	}
+	return image.ID, nil
+}
+
+func (client *dockerClient) LatestImageByRegex(regex string) (*docker.APIImages, error) {
+	images, err := (*docker.Client)(client).ListImages(false)
+	if err != nil {
+		return nil, err
 	}
 	sort.Sort(dockersort.ByCreatedDescending(images))
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
 			matched, err := regexp.MatchString(regex, tag)
 			if err != nil {
-				return "", nil
+				return nil, err
 			}
 			if matched {
-				return image.ID, nil
+				return &image, nil
 			}
 		}
 	}
-	return "", fmt.Errorf("unable to find image matching %q", regex)
+	return nil, fmt.Errorf("unable to find image matching %q", regex)
 }
 
 // Client returns the underlying *docker.Client for calling all of its functions
