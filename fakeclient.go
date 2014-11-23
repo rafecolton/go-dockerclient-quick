@@ -13,6 +13,7 @@ func (client *fakeClient) LatestImageByRegex(regex string) (*docker.APIImages, e
 	return &docker.APIImages{}, nil
 }
 
+// FakeClient returns a DockerClient implementation that is suitable for testing
 func FakeClient() DockerClient {
 	return &fakeClient{}
 }
