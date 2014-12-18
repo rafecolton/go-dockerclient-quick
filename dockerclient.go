@@ -92,7 +92,7 @@ func getEndpoint() (*url.URL, error) {
 }
 
 func (client *dockerClient) LatestImageByRegex(regex string) (*docker.APIImages, error) {
-	images, err := (*docker.Client)(client).ListImages(false)
+	images, err := (*docker.Client)(client).ListImages(docker.ListImagesOptions{All: false})
 	if err != nil {
 		return nil, err
 	}
